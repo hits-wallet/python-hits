@@ -279,6 +279,7 @@ def sign_tx(
     unlock_path_mac: Optional[bytes] = None,
     **kwargs: Any,
 ) -> Tuple[Sequence[Optional[bytes]], bytes]:
+    print("Sign_TX..."  )
     """Sign a Bitcoin-like transaction.
 
     Returns a list of signatures (one for each provided input) and the
@@ -324,9 +325,9 @@ def sign_tx(
         res = client.call(messages.DoPreauthorized())
         if not isinstance(res, messages.PreauthorizedRequest):
             raise exceptions.TrezorException("Unexpected message")
-
+    print("Call req", signtx)
     res = client.call(signtx)
-
+    print("Call res", res)
     # Prepare structure for signatures
     signatures: List[Optional[bytes]] = [None] * len(inputs)
     serialized_tx = b""
@@ -351,6 +352,7 @@ def sign_tx(
         # pick either kw-provided or default value from the SignTx request
         version=signtx.version,
     )
+    print("tx #1" , this_tx)
 
     R = messages.RequestType
     while isinstance(res, messages.TxRequest):
@@ -367,6 +369,7 @@ def sign_tx(
                 signatures[idx] = sig
 
         if res.request_type == R.TXFINISHED:
+            print("finish")
             break
 
         assert res.details is not None, "device did not provide details"
@@ -413,8 +416,9 @@ def sign_tx(
                 raise exceptions.TrezorException(
                     f"Unknown request type - {res.request_type}."
                 )
-
+            
             res = client.call(messages.TxAck(tx=msg))
+            print("Call in loop", msg, res)
 
     if not isinstance(res, messages.TxRequest):
         raise exceptions.TrezorException("Unexpected message")
@@ -422,7 +426,7 @@ def sign_tx(
     for i, sig in zip(inputs, signatures):
         if i.script_type != messages.InputScriptType.EXTERNAL and sig is None:
             raise exceptions.TrezorException("Some signatures are missing!")
-
+    print("sign return sign", signatures, "se_tx", serialized_tx)
     return signatures, serialized_tx
 
 

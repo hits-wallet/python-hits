@@ -8,3 +8,5 @@ MANIFEST
 *.py.cache
 /.tox
 mypy_report
+*.pyc
+**/__pyache__
