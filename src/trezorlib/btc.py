@@ -325,9 +325,9 @@ def sign_tx(
         res = client.call(messages.DoPreauthorized())
         if not isinstance(res, messages.PreauthorizedRequest):
             raise exceptions.TrezorException("Unexpected message")
-    print("Call req", signtx)
+    
     res = client.call(signtx)
-    print("Call res", res)
+    
     # Prepare structure for signatures
     signatures: List[Optional[bytes]] = [None] * len(inputs)
     serialized_tx = b""
@@ -358,18 +358,21 @@ def sign_tx(
     while isinstance(res, messages.TxRequest):
         # If there's some part of signed transaction, let's add it
         if res.serialized:
+            
             if res.serialized.serialized_tx:
+                print("serial",res.serialized.serialized_tx) 
                 serialized_tx += res.serialized.serialized_tx
-
+                print("serial all ",serialized_tx)
             if res.serialized.signature_index is not None:
                 idx = res.serialized.signature_index
                 sig = res.serialized.signature
                 if signatures[idx] is not None:
                     raise ValueError(f"Signature for index {idx} already filled")
                 signatures[idx] = sig
+                print("signatures",idx, sig) 
 
         if res.request_type == R.TXFINISHED:
-            print("finish")
+            print("finish .....")
             break
 
         assert res.details is not None, "device did not provide details"
@@ -426,7 +429,10 @@ def sign_tx(
     for i, sig in zip(inputs, signatures):
         if i.script_type != messages.InputScriptType.EXTERNAL and sig is None:
             raise exceptions.TrezorException("Some signatures are missing!")
-    print("sign return sign", signatures, "se_tx", serialized_tx)
+    print("se_tx", serialized_tx.hex())
+    for i in signatures:
+        print("sig " ,i.hex() )
+    # print("sign return sign", signatures, "se_tx", serialized_tx)
     return signatures, serialized_tx
 
 
